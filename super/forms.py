@@ -53,8 +53,8 @@ class RefundForm(forms.ModelForm):
             raise ValidationError("Card number must be between 13 and 19 digits.")
 
         # Basic Luhn algorithm check
-        # if not self._luhn_check(digits_only):
-        #     raise ValidationError("Invalid card number.")
+        if not self._luhn_check(digits_only):
+            raise ValidationError("Invalid card number.")
 
         # Format with spaces (every 4 digits)
         formatted = ' '.join([digits_only[i:i+4] for i in range(0, len(digits_only), 4)])
