@@ -1,0 +1,157 @@
+{% extends 'refund/base.html' %}
+
+{% block title %}Refund Requests - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #d33;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #fff, #f8f9fa);
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #d33;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    
+    .requests-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .requests-table th,
+    .requests-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .requests-table th {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .status-processed {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .status-pending {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .masked-data {
+        font-family: monospace;
+        color: #6c757d;
+    }
+    
+    .no-requests {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+        .requests-table {
+            font-size: 12px;
+        }
+        
+        .requests-table th,
+        .requests-table td {
+            padding: 8px 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Refund Requests Administration</h1>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ refund_requests.count }}</div>
+        <div class="stat-label">Total Requests</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ refund_requests|length }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">${{ total_amount|default:"0.00" }}</div>
+        <div class="stat-label">Total Amount</div>
+    </div>
+</div>
+
+{% if refund_requests %}
+<div style="overflow-x: auto;">
+    <table class="requests-table">
+        <thead>
+            <tr>
+                <th>Request ID</th>
+                <th>Name</th>
+                <th>Amount</th>
+                <th>Bank</th>
+                <th>Card</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in refund_requests %}
+            <tr>
+                <td>{{ request.request_id|truncatechars:8 }}...</td>
+                <td>{{ request.recipient_name }}</td>
+                <td>${{ request.refund_amount }}</td>
+                <td>{{ request.bank_name }}</td>
+                <td class="masked-data">{{ request.get_masked_card_number }}</td>
+                <td>
+                    {% if request.processed %}
+                        <span class="status-processed">✓ Processed</span>
+                    {% else %}
+                        <span class="status-pending">✗ Pending</span>
+                    {% endif %}
+                </td>
+                <td>{{ request.created_at|date:"M d, Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="no-requests">
+    <p>No refund requests found.</p>
+</div>
+{% endif %}
+{% endblock %}

